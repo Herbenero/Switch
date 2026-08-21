@@ -3,557 +3,260 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hellcastle Olympic Darts Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <title>Tournament Generator</title>
   <style>
     :root {
-      --bg-color: #121212;
-      --card-bg: #1e1e1e;
-      --accent-color: #ff9800;
-      --accent-hover: #e08600;
-      --text-color: #ffffff;
-      --subtext-color: #aaaaaa;
-      --border-color: #333333;
-      --gold: #d9b36a;
-      --gold-2: #f1d29a;
-      --stone: #d7c8b0;
-      --ash: #9d8e7a;
-      --red: #8f2d21;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
     }
-
     body {
-      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       margin: 0;
-      padding: 20px;
+      padding: 2rem;
       display: flex;
       justify-content: center;
     }
-
     .container {
       width: 100%;
-      max-width: 900px;
-    }
-
-    .card {
-      background-color: var(--card-bg);
+      max-width: 600px;
+      background: var(--card);
+      padding: 2rem;
       border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     }
-
-    .hidden {
-      display: none !important;
+    h1, h2 { text-align: center; margin-top: 0; }
+    .mode-selection {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
-
-    h1, h2, h3 {
-      text-align: center;
-      margin-top: 0;
-      color: var(--accent-color);
-    }
-
-    .btn {
-      background-color: var(--accent-color);
-      color: #000;
-      border: none;
-      padding: 12px 20px;
+    .mode-btn {
+      flex: 1;
+      padding: 0.75rem;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
       border-radius: 6px;
-      font-size: 16px;
+      cursor: pointer;
       font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-      transition: background 0.2s;
     }
-
-    .btn:hover {
-      background-color: var(--accent-hover);
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
     }
-
-    .btn:disabled {
-      background-color: #555 !important;
-      color: #888;
-      cursor: not-allowed;
-    }
-
-    .checkbox-group {
+    .input-group {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 15px 0;
-      background: #111;
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
-
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 18px;
+    input {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: white;
+    }
+    button.action-btn {
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-    }
-
-    .checkbox-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent-color);
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--subtext-color);
-    }
-
-    input[type="text"] {
+      font-weight: bold;
       width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
-      background-color: #111;
-      color: #fff;
-      box-sizing: border-box;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      padding: 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    th {
-      color: var(--subtext-color);
-      background: #2a2a32;
-    }
-
-    .game-header {
+    button.action-btn:hover { background: var(--accent-hover); }
+    ul { list-style: none; padding: 0; margin-bottom: 1.5rem; }
+    li {
+      background: #0f172a;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      font-size: 1.2rem;
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 10px;
     }
-
-    .active-player-banner {
-      font-size: 1.8rem;
-      font-weight: bold;
-      text-align: center;
-      padding: 10px;
-      background: #333;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      color: #ffeb3b;
-    }
-
-    .dart-display-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 15px 0;
-    }
-
-    .dart-display {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-
-    .dart-box {
-      width: 70px;
-      height: 40px;
-      border: 2px dashed #666;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      border-radius: 5px;
-      background: #222;
-    }
-
-    .turn-total {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #ffeb3b;
-    }
-
-    .controls-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-top: 15px;
-    }
-
-    .btn-pad {
-      padding: 12px 5px;
-      font-weight: bold;
-      border-radius: 5px;
+    .remove-btn {
+      background: transparent;
       border: none;
-      background: #444;
-      color: #fff;
+      color: #ef4444;
       cursor: pointer;
+      font-weight: bold;
     }
-
-    .btn-pad:hover {
-      background: #666;
+    .matches-container {
+      margin-top: 2rem;
     }
-
-    .btn-pad.modifier {
-      background: #0288d1;
+    .match-card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
     }
-
-    .btn-pad.modifier.active {
-      background: #00bcd4;
-      box-shadow: 0 0 8px #00bcd4;
-    }
-
-    .btn-pad.action {
-      background: #f57c00;
-    }
-
-    .advance-btn {
-      background: #388e3c;
-      color: white;
-      font-size: 1.1rem;
-      padding: 15px;
-      margin-top: 15px;
-    }
-
-    .advance-btn:hover {
-      background: #2e7d32;
-    }
+    .vs { color: var(--accent); font-weight: bold; margin: 0.5rem 0; }
+    .bye { color: var(--text-muted); font-style: italic; }
   </style>
 </head>
 <body>
+
 <div class="container">
-
-  <!-- 1. DASHBOARD HUB -->
-  <div id="dashboard-card" class="card">
-    <h1>🎯 Hellcastle Olympic Darts Hub 🎯</h1>
-    <div id="hub-leaderboard-section">
-      <h3>Overall Tournament Standings</h3>
-      <table>
-        <thead>
-          <tr><th>Rank</th><th>Player</th><th>Total Olympic Pts</th></tr>
-        </thead>
-        <tbody id="hub-scoreboard-body">
-          <tr><td colspan="3" style="text-align:center;">No active tournament started.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <button class="btn" style="margin-top:20px;" onclick="showRosterCard()">⚙️ Setup New Tournament</button>
-    <div id="included-events-launcher" style="margin-top: 30px;"></div>
+  <h1>Tournament Setup</h1>
+  
+  <div class="mode-selection">
+    <button class="mode-btn active" id="singles-btn" onclick="setMode('singles')">Singles (1v1)</button>
+    <button class="mode-btn" id="doubles-btn" onclick="setMode('doubles')">Doubles (2v2)</button>
   </div>
 
-  <!-- 2. ROSTER & EVENT SELECTION CARD -->
-  <div id="roster-card" class="card hidden">
-    <h2>Tournament Roster & Events</h2>
-    <div class="form-group">
-      <label>Add Players (Comma Separated):</label>
-      <input type="text" id="player-names-input" placeholder="e.g. Robin, Marion, Tuck" value="Robin, Marion, Tuck">
-    </div>
-
-    <h3>Select Included Events:</h3>
-    <div class="checkbox-group">
-      <label class="checkbox-item">
-        <input type="checkbox" class="event-checkbox" value="robinhood" checked>
-        <span>🏹 Robin Hood Darts</span>
-      </label>
-    </div>
-
-    <button class="btn" onclick="startTournament()">🚀 Confirm Setup & Launch Hub</button>
+  <div class="input-group">
+    <input type="text" id="player-input" placeholder="Enter player name" onkeydown="if(event.key==='Enter') addPlayer()">
+    <button class="action-btn" style="width: auto;" onclick="addPlayer()">Add</button>
   </div>
 
-  <!-- 3. EMBEDDED GAME ENGINE: ROBIN HOOD DARTS -->
-  <div id="robinhood-game-card" class="card hidden">
-    <button class="btn" style="background: #444; color: #fff; margin-bottom: 15px;" onclick="returnToDashboard()">🏠 Back to Hub</button>
-    <h2>🏹 Robin Hood Darts 🏹</h2>
-    
-    <div class="game-header">
-      <div>Round: <span id="rh-round-num">1</span> / <span id="rh-max-rounds">10</span></div>
-      <div>Target Segment: <strong style="color: var(--accent-color);" id="rh-target-segment">20</strong></div>
-    </div>
+  <ul id="player-list"></ul>
 
-    <div id="rh-active-banner" class="active-player-banner">PLAYER 1's TURN</div>
+  <button class="action-btn" onclick="startEvent()">Start Event</button>
 
-    <div class="dart-display-container">
-      <div class="dart-display">
-        <div class="dart-box" id="rh-dart-1">-</div>
-        <div class="dart-box" id="rh-dart-2">-</div>
-        <div class="dart-box" id="rh-dart-3">-</div>
-      </div>
-      <div class="turn-total">Turn Score: <span id="rh-turn-score">0</span></div>
-    </div>
-
-    <div class="controls-grid">
-      <button class="btn-pad modifier" id="rh-btn-double" onclick="toggleRobinModifier('double')">DOUBLE</button>
-      <button class="btn-pad modifier" id="rh-btn-triple" onclick="toggleRobinModifier('triple')">TRIPLE</button>
-      <button class="btn-pad action" id="rh-btn-robin" style="background: #9c27b0;" onclick="recordRobinDart('ROBIN')">ROBIN HOOD (50)</button>
-      <button class="btn-pad action" id="rh-btn-miss" onclick="recordRobinDart('MISS')">MISS (0)</button>
-      <button class="btn-pad action" id="rh-btn-undo" style="background:#d32f2f;" onclick="undoRobinDart()">UNDO</button>
-      <div id="rh-number-buttons" style="display: contents;"></div>
-    </div>
-
-    <button class="btn advance-btn" id="rh-btn-advance" disabled onclick="advanceRobinHoodTurn()">Advance Turn ➡️</button>
-
-    <h3 style="margin-top:25px;">Robin Hood Leaderboard</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Player</th>
-          <th>Total Points</th>
-          <th>Robin Hood Hits</th>
-        </tr>
-      </thead>
-      <tbody id="rh-scoreboard-body"></tbody>
-    </table>
+  <div class="matches-container" id="matches-section" style="display: none;">
+    <h2>Matchups</h2>
+    <div id="match-list"></div>
   </div>
-
 </div>
 
 <script>
-  // Global Tournament State
-  let tournamentRoster = ["Player 1", "Player 2"];
-  let selectedEvents = ["robinhood"];
+  let players = [];
+  let mode = 'singles';
+  let matchHistory = new Set(); // Tracks previously played matchups
 
-  // --- ROBIN HOOD GAME STATE ENGINE ---
-  let rhPlayers = [];
-  let rhCurrentPlayerIdx = 0;
-  let rhCurrentRound = 1;
-  const rhMaxRounds = 10;
-  let rhCurrentDarts = [];
-  let rhActiveModifier = null; // 'double' | 'triple' | null
-
-  const rhRoundTargets = [20, 19, 18, 17, 16, 15, 14, 13, 12, "BULL"];
-
-  function showRosterCard() {
-    document.getElementById('dashboard-card').classList.add('hidden');
-    document.getElementById('roster-card').classList.remove('hidden');
+  function setMode(selectedMode) {
+    mode = selectedMode;
+    document.getElementById('singles-btn').classList.toggle('active', mode === 'singles');
+    document.getElementById('doubles-btn').classList.toggle('active', mode === 'doubles');
+    matchHistory.clear(); // Reset history when changing mode
   }
 
-  function returnToDashboard() {
-    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-    document.getElementById('dashboard-card').classList.remove('hidden');
-  }
-
-  function startTournament() {
-    const input = document.getElementById('player-names-input').value;
-    const parsed = input.split(',').map(n => n.trim()).filter(n => n.length > 0);
-    if (parsed.length > 0) {
-      tournamentRoster = parsed;
-    }
-
-    document.getElementById('roster-card').classList.add('hidden');
-    document.getElementById('dashboard-card').classList.remove('hidden');
-    
-    renderLauncherButtons();
-  }
-
-  function renderLauncherButtons() {
-    const launcherContainer = document.getElementById('included-events-launcher');
-    if (!launcherContainer) return;
-
-    launcherContainer.innerHTML = '<h3>Launch Events</h3>';
-    
-    const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.style.marginTop = '10px';
-    btn.innerHTML = '🏹 Launch Event: Robin Hood Darts';
-    btn.onclick = () => launchEvent('robinhood');
-    launcherContainer.appendChild(btn);
-  }
-
-  function launchEvent(eventId) {
-    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-
-    if (eventId === 'robinhood') {
-      const card = document.getElementById('robinhood-game-card');
-      card.classList.remove('hidden');
-      initRobinHoodGame(tournamentRoster);
+  function addPlayer() {
+    const input = document.getElementById('player-input');
+    const name = input.value.trim();
+    if (name && !players.includes(name)) {
+      players.push(name);
+      input.value = '';
+      renderPlayers();
     }
   }
 
-  function initRobinHoodGame(playerList) {
-    const activePlayers = (playerList && playerList.length > 0) ? playerList : ["Player 1", "Player 2"];
-    
-    rhPlayers = activePlayers.map(name => ({
-      name: name,
-      totalScore: 0,
-      robinHits: 0,
-      roundScores: Array(rhMaxRounds).fill(0)
-    }));
-    
-    rhCurrentPlayerIdx = 0;
-    rhCurrentRound = 1;
-    rhCurrentDarts = [];
-    rhActiveModifier = null;
-
-    renderRobinHoodKeypad();
-    updateRobinHoodUI();
+  function removePlayer(name) {
+    players = players.filter(p => p !== name);
+    renderPlayers();
   }
 
-  function renderRobinHoodKeypad() {
-    const container = document.getElementById("rh-number-buttons");
-    if (!container) return;
-    container.innerHTML = "";
+  function renderPlayers() {
+    const list = document.getElementById('player-list');
+    list.innerHTML = players.map(p => 
+      `<li>${p} <button class="remove-btn" onclick="removePlayer('${p}')">✕</button></li>`
+    ).join('');
+  }
 
-    for (let i = 1; i <= 20; i++) {
-      const btn = document.createElement("button");
-      btn.className = "btn-pad";
-      btn.textContent = i;
-      btn.onclick = () => recordRobinDart(i);
-      container.appendChild(btn);
+  function shuffle(array) {
+    return [...array].sort(() => Math.random() - 0.5);
+  }
+
+  function getMatchKey(teamA, teamB) {
+    const a = teamA.sort().join('&');
+    const b = teamB.sort().join('&');
+    return [a, b].sort().join(' VS ');
+  }
+
+  function startEvent() {
+    const minPlayers = mode === 'singles' ? 2 : 4;
+    if (players.length < minPlayers) {
+      alert(`You need at least ${minPlayers} players for ${mode}.`);
+      return;
     }
 
-    const bullBtn = document.createElement("button");
-    bullBtn.className = "btn-pad action";
-    bullBtn.style.background = "#2e7d32";
-    bullBtn.textContent = "BULL";
-    bullBtn.onclick = () => recordRobinDart("BULL");
-    container.appendChild(bullBtn);
-  }
+    const teamSize = mode === 'singles' ? 1 : 2;
+    let availablePlayers = shuffle(players);
+    let teams = [];
 
-  function toggleRobinModifier(mod) {
-    if (rhActiveModifier === mod) {
-      rhActiveModifier = null;
-    } else {
-      rhActiveModifier = mod;
+    // Form teams
+    while (availablePlayers.length >= teamSize) {
+      teams.push(availablePlayers.splice(0, teamSize));
     }
     
-    document.getElementById("rh-btn-double").classList.toggle("active", rhActiveModifier === 'double');
-    document.getElementById("rh-btn-triple").classList.toggle("active", rhActiveModifier === 'triple');
-  }
+    // Handle remaining player for odd numbers in singles
+    let byePlayer = availablePlayers.length > 0 ? availablePlayers[0] : null;
 
-  function recordRobinDart(val) {
-    if (rhCurrentDarts.length >= 3) return;
-
-    let pts = 0;
-    let label = "";
-    const target = rhRoundTargets[rhCurrentRound - 1];
-
-    if (val === "ROBIN") {
-      pts = 50;
-      label = "ROBIN! (50)";
-    } else if (val === "MISS") {
-      pts = 0;
-      label = "MISS";
-    } else if (val === "BULL") {
-      pts = (rhActiveModifier === "double") ? 50 : 25;
-      label = `BULL (${pts})`;
-    } else {
-      let mult = 1;
-      if (rhActiveModifier === "double") mult = 2;
-      if (rhActiveModifier === "triple") mult = 3;
-
-      if (val === target) {
-        pts = val * mult;
-        label = `${rhActiveModifier ? rhActiveModifier.toUpperCase() + " " : ""}${val} (${pts})`;
-      } else {
-        pts = 0;
-        label = `OFF (${val})`;
+    let possiblePairs = [];
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        possiblePairs.push([teams[i], teams[j]]);
       }
     }
 
-    rhCurrentDarts.push({ pts, label, val });
-    rhActiveModifier = null;
-    document.getElementById("rh-btn-double").classList.remove("active");
-    document.getElementById("rh-btn-triple").classList.remove("active");
+    // Filter out previously played matches
+    let freshPairs = possiblePairs.filter(pair => !matchHistory.has(getMatchKey(pair[0], pair[1])));
 
-    updateRobinHoodUI();
-  }
-
-  function undoRobinDart() {
-    if (rhCurrentDarts.length > 0) {
-      rhCurrentDarts.pop();
-      updateRobinHoodUI();
-    }
-  }
-
-  function advanceRobinHoodTurn() {
-    const turnScore = rhCurrentDarts.reduce((sum, d) => sum + d.pts, 0);
-    const robinsThisTurn = rhCurrentDarts.filter(d => d.val === "ROBIN").length;
-
-    const player = rhPlayers[rhCurrentPlayerIdx];
-    player.totalScore += turnScore;
-    player.robinHits += robinsThisTurn;
-    player.roundScores[rhCurrentRound - 1] = turnScore;
-
-    rhCurrentDarts = [];
-
-    rhCurrentPlayerIdx++;
-    if (rhCurrentPlayerIdx >= rhPlayers.length) {
-      rhCurrentPlayerIdx = 0;
-      rhCurrentRound++;
+    // If all matchups have occurred, reset history and use all options
+    if (freshPairs.length === 0) {
+      matchHistory.clear();
+      freshPairs = possiblePairs;
     }
 
-    if (rhCurrentRound > rhMaxRounds) {
-      returnToDashboard();
-    } else {
-      renderRobinHoodKeypad();
-      updateRobinHoodUI();
-    }
-  }
+    // Create matches ensuring each team only plays once per round
+    let matches = [];
+    let usedTeams = new Set();
+    freshPairs = shuffle(freshPairs);
 
-  function updateRobinHoodUI() {
-    const target = rhRoundTargets[rhCurrentRound - 1] || "END";
-    document.getElementById("rh-round-num").textContent = rhCurrentRound;
-    document.getElementById("rh-target-segment").textContent = target;
-
-    const player = rhPlayers[rhCurrentPlayerIdx];
-    if (player) {
-      document.getElementById("rh-active-banner").textContent = `${player.name.toUpperCase()}'S TURN`;
+    for (let [teamA, teamB] of freshPairs) {
+      const keyA = teamA.join(',');
+      const keyB = teamB.join(',');
+      if (!usedTeams.has(keyA) && !usedTeams.has(keyB)) {
+        matches.push([teamA, teamB]);
+        usedTeams.add(keyA);
+        usedTeams.add(keyB);
+        matchHistory.add(getMatchKey(teamA, teamB));
+      }
     }
 
-    for (let i = 1; i <= 3; i++) {
-      const dartBox = document.getElementById(`rh-dart-${i}`);
-      const dart = rhCurrentDarts[i - 1];
-      dartBox.textContent = dart ? dart.label : "-";
+    renderMatches(matches, byePlayer);
+  }
+
+  function renderMatches(matches, byePlayer) {
+    const container = document.getElementById('matches-section');
+    const list = document.getElementById('match-list');
+    container.style.display = 'block';
+
+    let html = matches.map((m, index) => `
+      <div class="match-card">
+        <div><strong>Match ${index + 1}</strong></div>
+        <div>${m[0].join(' & ')}</div>
+        <div class="vs">VS</div>
+        <div>${m[1].join(' & ')}</div>
+      </div>
+    `).join('');
+
+    if (byePlayer) {
+      html += `
+        <div class="match-card bye">
+          <strong>BYE (No Match):</strong> ${byePlayer}
+        </div>
+      `;
     }
 
-    const turnScore = rhCurrentDarts.reduce((sum, d) => sum + d.pts, 0);
-    document.getElementById("rh-turn-score").textContent = turnScore;
-    document.getElementById("rh-btn-advance").disabled = rhCurrentDarts.length !== 3;
-
-    renderRobinHoodScoreboard();
+    list.innerHTML = html;
   }
-
-  function renderRobinHoodScoreboard() {
-    const tbody = document.getElementById("rh-scoreboard-body");
-    if (!tbody) return;
-
-    const sorted = [...rhPlayers].sort((a, b) => b.totalScore - a.totalScore);
-    tbody.innerHTML = sorted.map((p, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td><strong>${p.name}</strong></td>
-        <td>${p.totalScore}</td>
-        <td>${p.robinHits}</td>
-      </tr>
-    `).join("");
-  }
-
-  // Initialize Hub display on load
-  renderLauncherButtons();
 </script>
+
 </body>
 </html>
