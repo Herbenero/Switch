@@ -130,7 +130,7 @@
       cursor: pointer;
       font-weight: bold;
     }
-    .matches-container {
+    .matches-container, .leaderboard-container {
       margin-top: 2rem;
     }
     .match-card {
@@ -143,7 +143,7 @@
     }
     .match-card.completed {
       border-color: var(--success);
-      opacity: 0.85;
+      opacity: 0.9;
     }
     .team-row {
       display: flex;
@@ -154,20 +154,47 @@
       background: #1e293b;
       border-radius: 4px;
     }
-    .winner-tag {
-      color: var(--success);
-      font-weight: bold;
-      font-size: 0.9rem;
+    .score-inputs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .score-input {
+      width: 50px !important;
+      padding: 0.4rem !important;
+      text-align: center;
     }
     .vs { color: var(--accent); font-weight: bold; margin: 0.25rem 0; }
     .bye { color: var(--text-muted); font-style: italic; }
-    .winner-btn {
+    .save-score-btn {
       background: #334155;
       color: white;
       border: 1px solid var(--border);
       padding: 0.4rem 0.8rem;
       border-radius: 4px;
       cursor: pointer;
+      font-weight: bold;
+    }
+    .save-score-btn:hover {
+      background: var(--accent);
+    }
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .leaderboard-table th {
+      background: #1e293b;
+      color: var(--text-muted);
+      font-weight: bold;
     }
     .tournament-complete {
       text-align: center;
@@ -207,6 +234,21 @@
 
   <button class="action-btn" onclick="startEvent()">Start Event</button>
 
+  <div class="leaderboard-container" id="leaderboard-section" style="display: none;">
+    <h2>🏆 Leaderboard</h2>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Wins</th>
+          <th>Pts Scored</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+
   <div class="matches-container" id="matches-section" style="display: none;">
     <h2 id="round-header">Round 1 Matchups</h2>
     <div id="match-list"></div>
@@ -222,13 +264,15 @@
   let currentRound = 1;
   let totalRounds = 5;
 
-  // Populate Rounds Selector (1 - 20)
+  // Stats tracking for Leaderboard
+  let playerStats = {};
+
   const roundsSelect = document.getElementById('rounds-select');
   for (let i = 1; i <= 20; i++) {
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = i;
-    if (i === 5) opt.selected = true; // Default to 5 rounds
+    if (i === 5) opt.selected = true;
     roundsSelect.appendChild(opt);
   }
 
@@ -236,8 +280,7 @@
     mode = selectedMode;
     document.getElementById('singles-btn').classList.toggle('active', mode === 'singles');
     document.getElementById('doubles-btn').classList.toggle('active', mode === 'doubles');
-    matchHistory.clear();
-    currentRound = 1;
+    resetStats();
   }
 
   function addPlayer() {
@@ -272,6 +315,15 @@
     return [a, b].sort().join(' VS ');
   }
 
+  function resetStats() {
+    matchHistory.clear();
+    currentRound = 1;
+    playerStats = {};
+    players.forEach(p => {
+      playerStats[p] = { wins: 0, points: 0 };
+    });
+  }
+
   function startEvent() {
     const minPlayers = mode === 'singles' ? 2 : 4;
     if (players.length < minPlayers) {
@@ -279,8 +331,9 @@
       return;
     }
     totalRounds = parseInt(document.getElementById('rounds-select').value, 10);
-    matchHistory.clear();
-    currentRound = 1;
+    resetStats();
+    document.getElementById('leaderboard-section').style.display = 'block';
+    renderLeaderboard();
     generateNextRound();
   }
 
@@ -317,7 +370,7 @@
       const keyA = teamA.join(',');
       const keyB = teamB.join(',');
       if (!usedTeams.has(keyA) && !usedTeams.has(keyB)) {
-        matches.push({ teamA, teamB, winner: null });
+        matches.push({ teamA, teamB, scoreA: '', scoreB: '', submitted: false });
         usedTeams.add(keyA);
         usedTeams.add(keyB);
         matchHistory.add(getMatchKey(teamA, teamB));
@@ -328,9 +381,51 @@
     renderMatches(byePlayer);
   }
 
-  function setWinner(matchIndex, winningTeamIndex) {
-    currentMatches[matchIndex].winner = winningTeamIndex;
+  function submitScore(matchIndex) {
+    const inputA = document.getElementById(`score-a-${matchIndex}`);
+    const inputB = document.getElementById(`score-b-${matchIndex}`);
+    const valA = parseInt(inputA.value, 10);
+    const valB = parseInt(inputB.value, 10);
+
+    if (isNaN(valA) || isNaN(valB)) {
+      alert("Please enter numeric scores for both teams.");
+      return;
+    }
+
+    const match = currentMatches[matchIndex];
+    match.scoreA = valA;
+    match.scoreB = valB;
+    match.submitted = true;
+
+    // Award points to individual players
+    match.teamA.forEach(p => {
+      playerStats[p].points += valA;
+      if (valA > valB) playerStats[p].wins += 1;
+    });
+
+    match.teamB.forEach(p => {
+      playerStats[p].points += valB;
+      if (valB > valA) playerStats[p].wins += 1;
+    });
+
+    renderLeaderboard();
     renderMatches();
+  }
+
+  function renderLeaderboard() {
+    const body = document.getElementById('leaderboard-body');
+    const sorted = Object.keys(playerStats)
+      .map(p => ({ name: p, ...playerStats[p] }))
+      .sort((a, b) => b.wins - a.wins || b.points - a.points);
+
+    body.innerHTML = sorted.map((p, idx) => `
+      <tr>
+        <td>#${idx + 1}</td>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.wins}</td>
+        <td>${p.points}</td>
+      </tr>
+    `).join('');
   }
 
   function handleNextRound() {
@@ -351,26 +446,23 @@
     container.style.display = 'block';
 
     list.innerHTML = currentMatches.map((m, index) => {
-      const isCompleted = m.winner !== null;
       return `
-        <div class="match-card ${isCompleted ? 'completed' : ''}">
+        <div class="match-card ${m.submitted ? 'completed' : ''}">
           <div><strong>Match ${index + 1}</strong></div>
           
           <div class="team-row">
             <span>${m.teamA.join(' & ')}</span>
-            ${m.winner === 0 
-              ? '<span class="winner-tag">✓ Winner</span>' 
-              : `<button class="winner-btn" onclick="setWinner(${index}, 0)">Declare Winner</button>`}
+            <input type="number" id="score-a-${index}" class="score-input" value="${m.scoreA}" ${m.submitted ? 'disabled' : ''} min="0">
           </div>
 
           <div class="vs">VS</div>
 
           <div class="team-row">
             <span>${m.teamB.join(' & ')}</span>
-            ${m.winner === 1 
-              ? '<span class="winner-tag">✓ Winner</span>' 
-              : `<button class="winner-btn" onclick="setWinner(${index}, 1)">Declare Winner</button>`}
+            <input type="number" id="score-b-${index}" class="score-input" value="${m.scoreB}" ${m.submitted ? 'disabled' : ''} min="0">
           </div>
+
+          ${!m.submitted ? `<button class="save-score-btn" onclick="submitScore(${index})">Submit Score</button>` : `<span style="color: var(--success); font-weight: bold;">Score Recorded</span>`}
         </div>
       `;
     }).join('');
@@ -383,7 +475,7 @@
       `;
     }
 
-    const allCompleted = currentMatches.length > 0 && currentMatches.every(m => m.winner !== null);
+    const allCompleted = currentMatches.length > 0 && currentMatches.every(m => m.submitted);
     nextBtn.style.display = allCompleted ? 'block' : 'none';
     nextBtn.innerText = (currentRound === totalRounds) ? 'Finish Tournament' : 'Generate Next Round';
   }
@@ -396,7 +488,7 @@
     list.innerHTML = `
       <div class="tournament-complete">
         <h3>🎉 All ${totalRounds} rounds completed!</h3>
-        <p>You can restart a new event or adjust the round count in setup.</p>
+        <p>Check the leaderboard above for the final rankings!</p>
       </div>
     `;
     nextBtn.style.display = 'none';
