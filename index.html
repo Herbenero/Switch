@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tournament Generator</title>
+  <title>Switch Tourney</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -53,6 +53,36 @@
       background: var(--accent);
       color: white;
       border-color: var(--accent);
+    }
+    .setup-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .rounds-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #0f172a;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .rounds-group label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+    select {
+      background: var(--card);
+      color: white;
+      border: 1px solid var(--border);
+      padding: 0.4rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
     }
     .input-group {
       display: flex;
@@ -139,20 +169,33 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    .winner-btn.selected {
-      background: var(--success);
-      border-color: var(--success);
+    .tournament-complete {
+      text-align: center;
+      background: #0f172a;
+      border: 1px solid var(--success);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Tournament Setup</h1>
+  <h1>Switch Tournament</h1>
   
   <div class="mode-selection">
     <button class="mode-btn active" id="singles-btn" onclick="setMode('singles')">Singles (1v1)</button>
     <button class="mode-btn" id="doubles-btn" onclick="setMode('doubles')">Doubles (2v2)</button>
+  </div>
+
+  <div class="setup-row">
+    <div class="rounds-group">
+      <label for="rounds-select">Rounds to Play:</label>
+      <select id="rounds-select">
+        <!-- Options 1 to 20 populated dynamically -->
+      </select>
+    </div>
   </div>
 
   <div class="input-group">
@@ -167,7 +210,7 @@
   <div class="matches-container" id="matches-section" style="display: none;">
     <h2 id="round-header">Round 1 Matchups</h2>
     <div id="match-list"></div>
-    <button class="action-btn submit-btn" id="next-round-btn" onclick="generateNextRound()" style="display: none;">Generate Next Round</button>
+    <button class="action-btn submit-btn" id="next-round-btn" onclick="handleNextRound()" style="display: none;">Generate Next Round</button>
   </div>
 </div>
 
@@ -177,6 +220,17 @@
   let matchHistory = new Set();
   let currentMatches = [];
   let currentRound = 1;
+  let totalRounds = 5;
+
+  // Populate Rounds Selector (1 - 20)
+  const roundsSelect = document.getElementById('rounds-select');
+  for (let i = 1; i <= 20; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = i;
+    if (i === 5) opt.selected = true; // Default to 5 rounds
+    roundsSelect.appendChild(opt);
+  }
 
   function setMode(selectedMode) {
     mode = selectedMode;
@@ -224,6 +278,7 @@
       alert(`You need at least ${minPlayers} players for ${mode}.`);
       return;
     }
+    totalRounds = parseInt(document.getElementById('rounds-select').value, 10);
     matchHistory.clear();
     currentRound = 1;
     generateNextRound();
@@ -278,12 +333,21 @@
     renderMatches();
   }
 
+  function handleNextRound() {
+    if (currentRound < totalRounds) {
+      currentRound++;
+      generateNextRound();
+    } else {
+      renderTournamentComplete();
+    }
+  }
+
   function renderMatches(byePlayer = null) {
     const container = document.getElementById('matches-section');
     const list = document.getElementById('match-list');
     const nextBtn = document.getElementById('next-round-btn');
-    document.getElementById('round-header').innerText = `Round ${currentRound} Matchups`;
     
+    document.getElementById('round-header').innerText = `Round ${currentRound} of ${totalRounds} Matchups`;
     container.style.display = 'block';
 
     list.innerHTML = currentMatches.map((m, index) => {
@@ -319,15 +383,23 @@
       `;
     }
 
-    // Show "Generate Next Round" button only when all matches have declared winners
     const allCompleted = currentMatches.length > 0 && currentMatches.every(m => m.winner !== null);
     nextBtn.style.display = allCompleted ? 'block' : 'none';
-    if (allCompleted) {
-      nextBtn.onclick = () => {
-        currentRound++;
-        generateNextRound();
-      };
-    }
+    nextBtn.innerText = (currentRound === totalRounds) ? 'Finish Tournament' : 'Generate Next Round';
+  }
+
+  function renderTournamentComplete() {
+    const list = document.getElementById('match-list');
+    const nextBtn = document.getElementById('next-round-btn');
+    document.getElementById('round-header').innerText = 'Tournament Complete!';
+
+    list.innerHTML = `
+      <div class="tournament-complete">
+        <h3>🎉 All ${totalRounds} rounds completed!</h3>
+        <p>You can restart a new event or adjust the round count in setup.</p>
+      </div>
+    `;
+    nextBtn.style.display = 'none';
   }
 </script>
 
