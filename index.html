@@ -10,6 +10,7 @@
       --card: #1e293b;
       --accent: #3b82f6;
       --accent-hover: #2563eb;
+      --success: #22c55e;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
@@ -25,14 +26,14 @@
     }
     .container {
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       background: var(--card);
       padding: 2rem;
       border-radius: 12px;
       border: 1px solid var(--border);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     }
-    h1, h2 { text-align: center; margin-top: 0; }
+    h1, h2, h3 { text-align: center; margin-top: 0; }
     .mode-selection {
       display: flex;
       gap: 1rem;
@@ -58,7 +59,7 @@
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
-    input {
+    input[type="text"] {
       flex: 1;
       padding: 0.75rem;
       border-radius: 6px;
@@ -77,6 +78,11 @@
       width: 100%;
     }
     button.action-btn:hover { background: var(--accent-hover); }
+    button.submit-btn {
+      background: var(--success);
+      margin-top: 0.5rem;
+    }
+    button.submit-btn:hover { background: #16a34a; }
     ul { list-style: none; padding: 0; margin-bottom: 1.5rem; }
     li {
       background: #0f172a;
@@ -105,8 +111,38 @@
       margin-bottom: 1rem;
       text-align: center;
     }
-    .vs { color: var(--accent); font-weight: bold; margin: 0.5rem 0; }
+    .match-card.completed {
+      border-color: var(--success);
+      opacity: 0.85;
+    }
+    .team-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .winner-tag {
+      color: var(--success);
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .vs { color: var(--accent); font-weight: bold; margin: 0.25rem 0; }
     .bye { color: var(--text-muted); font-style: italic; }
+    .winner-btn {
+      background: #334155;
+      color: white;
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .winner-btn.selected {
+      background: var(--success);
+      border-color: var(--success);
+    }
   </style>
 </head>
 <body>
@@ -129,21 +165,25 @@
   <button class="action-btn" onclick="startEvent()">Start Event</button>
 
   <div class="matches-container" id="matches-section" style="display: none;">
-    <h2>Matchups</h2>
+    <h2 id="round-header">Round 1 Matchups</h2>
     <div id="match-list"></div>
+    <button class="action-btn submit-btn" id="next-round-btn" onclick="generateNextRound()" style="display: none;">Generate Next Round</button>
   </div>
 </div>
 
 <script>
   let players = [];
   let mode = 'singles';
-  let matchHistory = new Set(); // Tracks previously played matchups
+  let matchHistory = new Set();
+  let currentMatches = [];
+  let currentRound = 1;
 
   function setMode(selectedMode) {
     mode = selectedMode;
     document.getElementById('singles-btn').classList.toggle('active', mode === 'singles');
     document.getElementById('doubles-btn').classList.toggle('active', mode === 'doubles');
-    matchHistory.clear(); // Reset history when changing mode
+    matchHistory.clear();
+    currentRound = 1;
   }
 
   function addPlayer() {
@@ -173,8 +213,8 @@
   }
 
   function getMatchKey(teamA, teamB) {
-    const a = teamA.sort().join('&');
-    const b = teamB.sort().join('&');
+    const a = [...teamA].sort().join('&');
+    const b = [...teamB].sort().join('&');
     return [a, b].sort().join(' VS ');
   }
 
@@ -184,17 +224,20 @@
       alert(`You need at least ${minPlayers} players for ${mode}.`);
       return;
     }
+    matchHistory.clear();
+    currentRound = 1;
+    generateNextRound();
+  }
 
+  function generateNextRound() {
     const teamSize = mode === 'singles' ? 1 : 2;
     let availablePlayers = shuffle(players);
     let teams = [];
 
-    // Form teams
     while (availablePlayers.length >= teamSize) {
       teams.push(availablePlayers.splice(0, teamSize));
     }
     
-    // Handle remaining player for odd numbers in singles
     let byePlayer = availablePlayers.length > 0 ? availablePlayers[0] : null;
 
     let possiblePairs = [];
@@ -204,16 +247,13 @@
       }
     }
 
-    // Filter out previously played matches
     let freshPairs = possiblePairs.filter(pair => !matchHistory.has(getMatchKey(pair[0], pair[1])));
 
-    // If all matchups have occurred, reset history and use all options
     if (freshPairs.length === 0) {
       matchHistory.clear();
       freshPairs = possiblePairs;
     }
 
-    // Create matches ensuring each team only plays once per round
     let matches = [];
     let usedTeams = new Set();
     freshPairs = shuffle(freshPairs);
@@ -222,39 +262,72 @@
       const keyA = teamA.join(',');
       const keyB = teamB.join(',');
       if (!usedTeams.has(keyA) && !usedTeams.has(keyB)) {
-        matches.push([teamA, teamB]);
+        matches.push({ teamA, teamB, winner: null });
         usedTeams.add(keyA);
         usedTeams.add(keyB);
         matchHistory.add(getMatchKey(teamA, teamB));
       }
     }
 
-    renderMatches(matches, byePlayer);
+    currentMatches = matches;
+    renderMatches(byePlayer);
   }
 
-  function renderMatches(matches, byePlayer) {
+  function setWinner(matchIndex, winningTeamIndex) {
+    currentMatches[matchIndex].winner = winningTeamIndex;
+    renderMatches();
+  }
+
+  function renderMatches(byePlayer = null) {
     const container = document.getElementById('matches-section');
     const list = document.getElementById('match-list');
+    const nextBtn = document.getElementById('next-round-btn');
+    document.getElementById('round-header').innerText = `Round ${currentRound} Matchups`;
+    
     container.style.display = 'block';
 
-    let html = matches.map((m, index) => `
-      <div class="match-card">
-        <div><strong>Match ${index + 1}</strong></div>
-        <div>${m[0].join(' & ')}</div>
-        <div class="vs">VS</div>
-        <div>${m[1].join(' & ')}</div>
-      </div>
-    `).join('');
+    list.innerHTML = currentMatches.map((m, index) => {
+      const isCompleted = m.winner !== null;
+      return `
+        <div class="match-card ${isCompleted ? 'completed' : ''}">
+          <div><strong>Match ${index + 1}</strong></div>
+          
+          <div class="team-row">
+            <span>${m.teamA.join(' & ')}</span>
+            ${m.winner === 0 
+              ? '<span class="winner-tag">✓ Winner</span>' 
+              : `<button class="winner-btn" onclick="setWinner(${index}, 0)">Declare Winner</button>`}
+          </div>
+
+          <div class="vs">VS</div>
+
+          <div class="team-row">
+            <span>${m.teamB.join(' & ')}</span>
+            ${m.winner === 1 
+              ? '<span class="winner-tag">✓ Winner</span>' 
+              : `<button class="winner-btn" onclick="setWinner(${index}, 1)">Declare Winner</button>`}
+          </div>
+        </div>
+      `;
+    }).join('');
 
     if (byePlayer) {
-      html += `
+      list.innerHTML += `
         <div class="match-card bye">
           <strong>BYE (No Match):</strong> ${byePlayer}
         </div>
       `;
     }
 
-    list.innerHTML = html;
+    // Show "Generate Next Round" button only when all matches have declared winners
+    const allCompleted = currentMatches.length > 0 && currentMatches.every(m => m.winner !== null);
+    nextBtn.style.display = allCompleted ? 'block' : 'none';
+    if (allCompleted) {
+      nextBtn.onclick = () => {
+        currentRound++;
+        generateNextRound();
+      };
+    }
   }
 </script>
 
