@@ -215,14 +215,6 @@
       color: var(--text-muted);
       font-weight: bold;
     }
-    .tournament-complete {
-      text-align: center;
-      background: #0f172a;
-      border: 1px solid var(--success);
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin-top: 1rem;
-    }
   </style>
 </head>
 <body>
@@ -318,14 +310,23 @@
     }
 
     function startEvent() {
-      if (players.length < (mode === 'singles' ? 2 : 4)) {
-        alert(`Need at least ${mode === 'singles' ? 2 : 4} players to start.`);
+      const minPlayers = mode === 'singles' ? 2 : 4;
+      if (players.length < minPlayers) {
+        alert(`Need at least ${minPlayers} players to start.`);
         return;
       }
 
-      // If odd number of players, require 5 rounds so everyone gets 1 bye and 4 games played
-      const isOdd = players.length % 2 !== 0;
-      totalRounds = isOdd ? 5 : 4;
+      const matchGroupSize = mode === 'singles' ? 2 : 4;
+      const targetGames = 4;
+      const sitOutCount = players.length % matchGroupSize;
+
+      // Calculate total rounds to ensure 4 games per player
+      if (sitOutCount === 0) {
+        totalRounds = targetGames;
+      } else {
+        const activePerRound = players.length - sitOutCount;
+        totalRounds = Math.round((targetGames * players.length) / activePerRound);
+      }
 
       playerStats = {};
       players.forEach(p => {
@@ -333,7 +334,7 @@
       });
 
       currentRound = 1;
-      generateSchedule();
+      generateSchedule(matchGroupSize, sitOutCount);
 
       document.getElementById('setup-section').style.display = 'none';
       document.getElementById('leaderboard-section').style.display = 'block';
@@ -343,55 +344,56 @@
       renderCurrentRound();
     }
 
-    function generateSchedule() {
+    function generateSchedule(groupSize, sitOutCount) {
       roundsData = [];
-      let playerPool = [...players];
+      let byeTracker = {};
+      players.forEach(p => byeTracker[p] = 0);
 
       for (let r = 1; r <= totalRounds; r++) {
-        let activePlayers = [...playerPool];
-        let byePlayer = null;
+        let byePlayers = [];
 
-        // Systematic rotation for odd players: 1 player gets a bye per round
-        if (players.length % 2 !== 0) {
-          const byeIndex = (r - 1) % players.length;
-          byePlayer = players[byeIndex];
-          activePlayers = activePlayers.filter(p => p !== byePlayer);
+        if (sitOutCount > 0) {
+          // Sort players by who has had the fewest byes to keep sitting out balanced
+          let sortedByByes = [...players].sort((a, b) => byeTracker[a] - byeTracker[b]);
+          
+          // Rotate selection if byes are equal
+          const offset = (r - 1) * sitOutCount % players.length;
+          let pool = [...players.slice(offset), ...players.slice(0, offset)];
+          pool.sort((a, b) => byeTracker[a] - byeTracker[b]);
+
+          byePlayers = pool.slice(0, sitOutCount);
+          byePlayers.forEach(p => byeTracker[p]++);
         }
 
-        // Shuffle active players for pairings
+        let activePlayers = players.filter(p => !byePlayers.includes(p));
         activePlayers.sort(() => Math.random() - 0.5);
 
         let matches = [];
         if (mode === 'singles') {
           for (let i = 0; i < activePlayers.length; i += 2) {
-            if (i + 1 < activePlayers.length) {
-              matches.push({
-                team1: [activePlayers[i]],
-                team2: [activePlayers[i + 1]],
-                score1: null,
-                score2: null,
-                completed: false
-              });
-            }
+            matches.push({
+              team1: [activePlayers[i]],
+              team2: [activePlayers[i + 1]],
+              score1: null,
+              score2: null,
+              completed: false
+            });
           }
         } else {
-          // Doubles
           for (let i = 0; i < activePlayers.length; i += 4) {
-            if (i + 3 < activePlayers.length) {
-              matches.push({
-                team1: [activePlayers[i], activePlayers[i + 1]],
-                team2: [activePlayers[i + 2], activePlayers[i + 3]],
-                score1: null,
-                score2: null,
-                completed: false
-              });
-            }
+            matches.push({
+              team1: [activePlayers[i], activePlayers[i + 1]],
+              team2: [activePlayers[i + 2], activePlayers[i + 3]],
+              score1: null,
+              score2: null,
+              completed: false
+            });
           }
         }
 
         roundsData.push({
           round: r,
-          bye: byePlayer,
+          byes: byePlayers,
           matches: matches
         });
       }
@@ -402,9 +404,9 @@
       document.getElementById('round-header').innerText = `Round ${currentRound} of ${totalRounds}`;
 
       const byeDisplay = document.getElementById('bye-display');
-      if (roundInfo.bye) {
+      if (roundInfo.byes && roundInfo.byes.length > 0) {
         byeDisplay.style.display = 'block';
-        byeDisplay.innerText = `🛋️ Sitting out this round (Bye): ${roundInfo.bye}`;
+        byeDisplay.innerText = `🛋️ Sitting out this round (Bye): ${roundInfo.byes.join(', ')}`;
       } else {
         byeDisplay.style.display = 'none';
       }
@@ -444,11 +446,6 @@
 
       const match = roundsData[currentRound - 1].matches[matchIdx];
       
-      // Roll back previous score stats if updating
-      if (match.completed) {
-        recalculateAllStats();
-      }
-
       match.score1 = score1;
       match.score2 = score2;
       match.completed = true;
@@ -459,12 +456,10 @@
     }
 
     function recalculateAllStats() {
-      // Reset stats
       players.forEach(p => {
         playerStats[p] = { wins: 0, points: 0, gamesPlayed: 0 };
       });
 
-      // Recalculate based on completed matches
       roundsData.forEach(r => {
         r.matches.forEach(m => {
           if (m.completed) {
