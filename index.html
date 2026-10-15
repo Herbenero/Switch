@@ -214,7 +214,7 @@
 
         <div id="winnerBanner" class="winner-banner">
             <h2 id="winnerTitle" style="margin:0; border:none;">We have a Winner!</h2>
-            <img id="winnerImage" src="" alt="Winning Horse">
+            <img id="winnerImage" src="" alt="Winning Horse" onerror="this.style.display='none';">
         </div>
 
         <div class="grid-layout">
@@ -332,11 +332,10 @@
         ];
 
         const horseImagePool = [
-            "hellcastle_horse_appaloosa.png", "hellcastle_horse_bay.png", "hellcastle_horse_blue_roan.png",
-            "hellcastle_horse_buckskin.png", "hellcastle_horse_chestnut.png", "hellcastle_horse_cremello.png",
-            "hellcastle_horse_dun.png", "hellcastle_horse_gray.png", "hellcastle_horse_leopard.png",
-            "hellcastle_horse_paint.png", "hellcastle_horse_palomino.png", "hellcastle_horse_roan.png",
-            "hellcastle_horse_skewbald.png", "hellcastle_horse_smoky_black.png", "hellcastle_horse_white.png", "Horsey1.png"
+            "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400",
+            "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=400",
+            "https://images.unsplash.com/photo-1598974357831-2a10a3a7d2e1?w=400",
+            "https://images.unsplash.com/photo-1562920618-d80a7dc1d848?w=400"
         ];
 
         let state = {
@@ -389,8 +388,12 @@
             const player = state.players.find(p => p.horse === trackNum);
             const winnerName = player ? `Track ${trackNum} (${player.name})` : `Track ${trackNum}`;
             document.getElementById('winnerTitle').innerText = `${winnerName} ${reasonText}`;
+            
             const randomImg = horseImagePool[Math.floor(Math.random() * horseImagePool.length)];
-            document.getElementById('winnerImage').src = randomImg;
+            const imgElement = document.getElementById('winnerImage');
+            imgElement.src = randomImg;
+            imgElement.style.display = 'block';
+            
             document.getElementById('winnerBanner').style.display = 'block';
         }
 
@@ -453,6 +456,8 @@
             });
         }
 
+        let lastAiMessage = "";
+
         function renderTurn() {
             const display = document.getElementById('currentTurnDisplay');
             if (state.players.length === 0) {
@@ -462,14 +467,20 @@
             const currentPlayer = state.players[state.turnIndex % state.players.length];
             const numsText = numbersRevealed && state.assignedNumbers[currentPlayer.horse] ? state.assignedNumbers[currentPlayer.horse].join(', ') : 'Hidden';
             
-            display.innerHTML = `${currentPlayer.name} ${currentPlayer.isAI ? '🤖 (AI)' : ''}<br>` +
+            let html = `${currentPlayer.name} ${currentPlayer.isAI ? '🤖 (AI)' : ''}<br>` +
                 `<span style="font-size:0.85rem; color:var(--text-muted);">Riding Track #${currentPlayer.horse} (Numbers: ${numsText})</span><br>` +
                 `<span style="font-size:0.9rem; color:var(--accent);">Dart Throw: ${state.dartCount} of 3</span>`;
+
+            if (currentPlayer.isAI && lastAiMessage) {
+                html += `<br><span style="font-size:0.8rem; color:var(--success);">${lastAiMessage}</span>`;
+            }
+
+            display.innerHTML = html;
 
             // If AI's turn, trigger sequential 3-dart throws
             if (currentPlayer.isAI && !state.winner && !window.aiThrowingInProgress) {
                 window.aiThrowingInProgress = true;
-                setTimeout(handleAIDartThrow, 800);
+                setTimeout(handleAIDartThrow, 900);
             }
         }
 
@@ -484,11 +495,38 @@
                 return;
             }
 
-            // 40% chance to hit on each individual dart
-            const hitScored = Math.random() < 0.40;
-            if (hitScored) {
-                adjustScore(currentPlayer.horse, 1);
+            // Simulate the AI aiming at its own numbers with ~35% accuracy, or hitting any random number on the board
+            let hitTarget = false;
+            let hitNumber = Math.floor(Math.random() * 20) + 1; // Random dart thrown 1-20
+
+            // Give the AI a bias to hit its own assigned numbers (e.g. 40% chance it actually lands on one of its assigned numbers)
+            const myAssignedNums = state.assignedNumbers[currentPlayer.horse] || [];
+            if (Math.random() < 0.40 && myAssignedNums.length > 0) {
+                hitNumber = myAssignedNums[Math.floor(Math.random() * myAssignedNums.length)];
             }
+
+            // Find which track(s) own this hitNumber
+            let affectedTracks = [];
+            for (let t = 1; t <= 10; t++) {
+                if (state.assignedNumbers[t] && state.assignedNumbers[t].includes(hitNumber)) {
+                    affectedTracks.push(t);
+                }
+            }
+
+            if (affectedTracks.length > 0) {
+                // Advance all tracks that own this hit number!
+                affectedTracks.forEach(t => {
+                    state.scores[t] = Math.max(0, Math.min(FINISH_HITS, state.scores[t] + 1));
+                    if (state.scores[t] >= FINISH_HITS && !state.winner) {
+                        declareWinner(t);
+                    }
+                });
+                lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber}! (Track(s) ${affectedTracks.join(', ')} advanced)`;
+            } else {
+                lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber} (Miss / No owner)`;
+            }
+
+            renderTracks();
 
             if (state.winner) {
                 window.aiThrowingInProgress = false;
@@ -499,11 +537,12 @@
             if (state.dartCount < 3) {
                 state.dartCount++;
                 renderTurn();
-                setTimeout(handleAIDartThrow, 800);
+                setTimeout(handleAIDartThrow, 900);
             } else {
                 // Done with 3 darts, advance to next player
                 state.dartCount = 1;
                 state.turnIndex++;
+                lastAiMessage = "";
                 window.aiThrowingInProgress = false;
                 renderTurn();
             }
@@ -597,6 +636,7 @@
                     state.turnIndex = 0;
                     state.dartCount = 1;
                     numbersRevealed = false;
+                    lastAiMessage = "";
                     window.aiThrowingInProgress = false;
                     Object.keys(state.scores).forEach(k => state.scores[k] = 0);
                     document.getElementById('winnerBanner').style.display = 'none';
@@ -634,6 +674,7 @@
                     state.winner = null;
                     state.dartCount = 1;
                     numbersRevealed = false;
+                    lastAiMessage = "";
                     window.aiThrowingInProgress = false;
                     document.getElementById('winnerBanner').style.display = 'none';
                     assignRandomNumbers();
