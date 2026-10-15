@@ -485,69 +485,65 @@
         }
 
         function handleAIDartThrow() {
-            if (state.winner) {
-                window.aiThrowingInProgress = false;
-                return;
-            }
-            const currentPlayer = state.players[state.turnIndex % state.players.length];
-            if (!currentPlayer || !currentPlayer.isAI) {
-                window.aiThrowingInProgress = false;
-                return;
-            }
+    if (state.winner) {
+        window.aiThrowingInProgress = false;
+        return;
+    }
+    const currentPlayer = state.players[state.turnIndex % state.players.length];
+    if (!currentPlayer || !currentPlayer.isAI) {
+        window.aiThrowingInProgress = false;
+        return;
+    }
 
-            // Simulate the AI aiming at its own numbers with ~35% accuracy, or hitting any random number on the board
-            let hitTarget = false;
-            let hitNumber = Math.floor(Math.random() * 20) + 1; // Random dart thrown 1-20
+    // Simulate the AI aiming at its own numbers with ~40% accuracy, or hitting any random number
+    let hitNumber = Math.floor(Math.random() * 20) + 1; 
+    const myAssignedNums = state.assignedNumbers[currentPlayer.horse] || [];
+    if (Math.random() < 0.40 && myAssignedNums.length > 0) {
+        hitNumber = myAssignedNums[Math.floor(Math.random() * myAssignedNums.length)];
+    }
 
-            // Give the AI a bias to hit its own assigned numbers (e.g. 40% chance it actually lands on one of its assigned numbers)
-            const myAssignedNums = state.assignedNumbers[currentPlayer.horse] || [];
-            if (Math.random() < 0.40 && myAssignedNums.length > 0) {
-                hitNumber = myAssignedNums[Math.floor(Math.random() * myAssignedNums.length)];
-            }
-
-            // Find which track(s) own this hitNumber
-            let affectedTracks = [];
-            for (let t = 1; t <= 10; t++) {
-                if (state.assignedNumbers[t] && state.assignedNumbers[t].includes(hitNumber)) {
-                    affectedTracks.push(t);
-                }
-            }
-
-            if (affectedTracks.length > 0) {
-                // Advance all tracks that own this hit number!
-                affectedTracks.forEach(t => {
-                    state.scores[t] = Math.max(0, Math.min(FINISH_HITS, state.scores[t] + 1));
-                    if (state.scores[t] >= FINISH_HITS && !state.winner) {
-                        declareWinner(t);
-                    }
-                });
-                lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber}! (Track(s) ${affectedTracks.join(', ')} advanced)`;
-            } else {
-                lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber} (Miss / No owner)`;
-            }
-
-            renderTracks();
-
-            if (state.winner) {
-                window.aiThrowingInProgress = false;
-                return;
-            }
-
-            // Advance dart count or player turn
-            if (state.dartCount < 3) {
-                state.dartCount++;
-                renderTurn();
-                setTimeout(handleAIDartThrow, 900);
-            } else {
-                // Done with 3 darts, advance to next player
-                state.dartCount = 1;
-                state.turnIndex++;
-                lastAiMessage = "";
-                window.aiThrowingInProgress = false;
-                renderTurn();
-            }
+    // Find which track(s) own this hitNumber
+    let affectedTracks = [];
+    for (let t = 1; t <= 10; t++) {
+        if (state.assignedNumbers[t] && state.assignedNumbers[t].includes(hitNumber)) {
+            affectedTracks.push(t);
         }
+    }
 
+    if (affectedTracks.length > 0) {
+        affectedTracks.forEach(t => {
+            state.scores[t] = Math.max(0, Math.min(FINISH_HITS, state.scores[t] + 1));
+            if (state.scores[t] >= FINISH_HITS && !state.winner) {
+                declareWinner(t);
+            }
+        });
+        lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber}! (Track(s) ${affectedTracks.join(', ')} advanced)`;
+    } else {
+        lastAiMessage = `Dart ${state.dartCount}: Hit #${hitNumber} (Miss / No owner)`;
+    }
+
+    renderTracks();
+
+    if (state.winner) {
+        window.aiThrowingInProgress = false;
+        return;
+    }
+
+    // If we haven't thrown 3 darts yet, throw the next dart after a pause
+    if (state.dartCount < 3) {
+        state.dartCount++;
+        setTimeout(handleAIDartThrow, 900);
+    } else {
+        // Finished all 3 darts! Wait a moment so the player can see the 3rd throw result, then switch turns.
+        setTimeout(() => {
+            state.dartCount = 1;
+            state.turnIndex++;
+            lastAiMessage = "";
+            window.aiThrowingInProgress = false;
+            renderTurn();
+        }, 1200);
+    }
+}
         function handleBullHit() {
             if (state.winner) return;
             for (let i = 1; i <= 10; i++) {
