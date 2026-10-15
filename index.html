@@ -273,7 +273,7 @@
                 <div id="currentTurnDisplay" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent);">
                     Loading...
                 </div>
-                <button id="nextTurnBtn" class="secondary">Next Turn &rarr;</button>
+                <button id="nextTurnBtn" class="secondary">Next Player &rarr;</button>
 
                 <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
 
@@ -341,6 +341,7 @@
             scores: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 },
             assignedNumbers: {},
             turnIndex: 0,
+            dartCount: 1, // Tracks current dart (1, 2, or 3)
             winner: null
         };
 
@@ -457,38 +458,52 @@
             }
             const currentPlayer = state.players[state.turnIndex % state.players.length];
             const numsText = numbersRevealed && state.assignedNumbers[currentPlayer.horse] ? state.assignedNumbers[currentPlayer.horse].join(', ') : 'Hidden';
-            display.innerHTML = `${currentPlayer.name} ${currentPlayer.isAI ? '🤖 (AI)' : ''}<br><span style="font-size:0.85rem; color:var(--text-muted);">Riding Track #${currentPlayer.horse} (Numbers: ${numsText})</span>`;
+            
+            display.innerHTML = `${currentPlayer.name} ${currentPlayer.isAI ? '🤖 (AI)' : ''}<br>` +
+                `<span style="font-size:0.85rem; color:var(--text-muted);">Riding Track #${currentPlayer.horse} (Numbers: ${numsText})</span><br>` +
+                `<span style="font-size:0.9rem; color:var(--accent);">Dart Throw: ${state.dartCount} of 3</span>`;
 
-            // Trigger AI Turn automatically if applicable
-            if (currentPlayer.isAI && !state.winner) {
-                setTimeout(handleAITurn, 1000);
+            // If AI's turn, trigger sequential 3-dart throws
+            if (currentPlayer.isAI && !state.winner && !window.aiThrowingInProgress) {
+                window.aiThrowingInProgress = true;
+                setTimeout(handleAIDartThrow, 800);
             }
         }
 
-        function handleAITurn() {
-            if (state.winner) return;
+        function handleAIDartThrow() {
+            if (state.winner) {
+                window.aiThrowingInProgress = false;
+                return;
+            }
             const currentPlayer = state.players[state.turnIndex % state.players.length];
-            if (!currentPlayer || !currentPlayer.isAI) return;
-
-            // Simulate 3 darts for the AI with a 40% chance per dart to score a hit
-            let hitsScored = 0;
-            for (let dart = 0; dart < 3; dart++) {
-                if (Math.random() < 0.40) {
-                    hitsScored++;
-                }
+            if (!currentPlayer || !currentPlayer.isAI) {
+                window.aiThrowingInProgress = false;
+                return;
             }
 
-            if (hitsScored > 0) {
-                adjustScore(currentPlayer.horse, hitsScored);
+            // 40% chance to hit on each individual dart
+            const hitScored = Math.random() < 0.40;
+            if (hitScored) {
+                adjustScore(currentPlayer.horse, 1);
             }
 
-            // Auto advance turn after a short pause
-            setTimeout(() => {
-                if (!state.winner) {
-                    state.turnIndex++;
-                    renderTurn();
-                }
-            }, 1200);
+            if (state.winner) {
+                window.aiThrowingInProgress = false;
+                return;
+            }
+
+            // Advance dart count or player turn
+            if (state.dartCount < 3) {
+                state.dartCount++;
+                renderTurn();
+                setTimeout(handleAIDartThrow, 800);
+            } else {
+                // Done with 3 darts, advance to next player
+                state.dartCount = 1;
+                state.turnIndex++;
+                window.aiThrowingInProgress = false;
+                renderTurn();
+            }
         }
 
         function handleBullHit() {
@@ -577,7 +592,9 @@
                     state.players = [];
                     state.winner = null;
                     state.turnIndex = 0;
+                    state.dartCount = 1;
                     numbersRevealed = false;
+                    window.aiThrowingInProgress = false;
                     Object.keys(state.scores).forEach(k => state.scores[k] = 0);
                     document.getElementById('winnerBanner').style.display = 'none';
                     assignRandomNumbers();
@@ -586,8 +603,12 @@
             });
 
             document.getElementById('nextTurnBtn').addEventListener('click', () => {
-                if (state.players.length > 0) {
-                    state.turnIndex++;
+                if (state.players.length > 0 && !window.aiThrowingInProgress) {
+                    state.dartCount++;
+                    if (state.dartCount > 3) {
+                        state.dartCount = 1;
+                        state.turnIndex++;
+                    }
                     renderTurn();
                 }
             });
@@ -608,7 +629,9 @@
                 if (confirm('Reset all scores, re-assign random numbers, and hide target numbers?')) {
                     Object.keys(state.scores).forEach(k => state.scores[k] = 0);
                     state.winner = null;
+                    state.dartCount = 1;
                     numbersRevealed = false;
+                    window.aiThrowingInProgress = false;
                     document.getElementById('winnerBanner').style.display = 'none';
                     assignRandomNumbers();
                     renderTracks();
