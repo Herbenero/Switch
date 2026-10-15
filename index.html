@@ -1,531 +1,629 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Switch Tourney</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #22c55e;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-    }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 650px;
-      background: var(--card);
-      padding: 2rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    }
-    h1, h2, h3 {
-      text-align: center;
-      margin-top: 0;
-    }
-    .mode-selection {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .mode-btn {
-      flex: 1;
-      padding: 0.75rem;
-      background: #0f172a;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .mode-btn.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-    .setup-row {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    .rounds-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: #0f172a;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      white-space: nowrap;
-      width: 100%;
-      justify-content: space-between;
-    }
-    .rounds-group label {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      font-weight: bold;
-    }
-    .input-group {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 0.75rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: #0f172a;
-      color: white;
-    }
-    button.action-btn {
-      padding: 0.75rem 1.5rem;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      width: 100%;
-    }
-    button.action-btn:hover {
-      background: var(--accent-hover);
-    }
-    button.submit-btn {
-      background: var(--success);
-      margin-top: 0.5rem;
-    }
-    button.submit-btn:hover {
-      background: #16a34a;
-    }
-    button.secondary-btn {
-      background: #334155;
-      margin-top: 1rem;
-    }
-    button.secondary-btn:hover {
-      background: #475569;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-bottom: 1.5rem;
-    }
-    li {
-      background: #0f172a;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      margin-bottom: 0.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .remove-btn {
-      background: transparent;
-      border: none;
-      color: #ef4444;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .matches-container, .leaderboard-container {
-      margin-top: 2rem;
-    }
-    .match-card {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    .match-card.completed {
-      border-color: var(--success);
-      opacity: 0.9;
-    }
-    .team-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      background: #1e293b;
-      border-radius: 4px;
-    }
-    .score-input {
-      width: 50px !important;
-      padding: 0.4rem !important;
-      text-align: center;
-    }
-    .vs {
-      color: var(--accent);
-      font-weight: bold;
-      margin: 0.25rem 0;
-    }
-    .bye {
-      color: var(--text-muted);
-      font-style: italic;
-      background: #0f172a;
-      padding: 0.75rem;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      text-align: center;
-      border: 1px dashed var(--border);
-    }
-    .save-score-btn {
-      background: #334155;
-      color: white;
-      border: 1px solid var(--border);
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .save-score-btn:hover {
-      background: var(--accent);
-    }
-    .leaderboard-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      background: #0f172a;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .leaderboard-table th, .leaderboard-table td {
-      padding: 0.75rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    .leaderboard-table th {
-      background: #1e293b;
-      color: var(--text-muted);
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hellcastle Horse Race Darts</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        header h1 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent);
+        }
+        header p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .panel h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: #0f172a;
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        button {
+            background-color: var(--accent);
+            color: #0f172a;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        button.secondary {
+            background-color: #334155;
+            color: var(--text-main);
+        }
+        button.secondary:hover {
+            background-color: #475569;
+        }
+        button.danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        /* Tracks View */
+        .tracks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .track-row {
+            display: grid;
+            grid-template-columns: 40px 140px 1fr 60px 140px;
+            align-items: center;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            gap: 1rem;
+        }
+        @media (max-width: 768px) {
+            .track-row {
+                grid-template-columns: 30px 100px 1fr 40px;
+            }
+            .track-actions {
+                display: none;
+            }
+        }
+        .track-number {
+            font-weight: bold;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+        .track-info .track-owner {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .track-info .assigned-nums {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .track-lane {
+            position: relative;
+            height: 24px;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        .horse-icon {
+            position: absolute;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            transition: left 0.3s ease;
+        }
+        .track-score {
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .track-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .action-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        /* Leaderboard & Turn info */
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .winner-banner {
+            display: none;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .winner-banner img {
+            max-width: 150px;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Switch Tournament</h1>
+    <div class="container">
+        <header>
+            <h1>Hellcastle Horse Race Darts</h1>
+            <p>Tracks 1–10 • Unique Random Number & Name Pool • Live Arcade Board</p>
+        </header>
 
-    <!-- Setup Container -->
-    <div id="setup-section">
-      <div class="mode-selection">
-        <button class="mode-btn active" id="singles-btn" onclick="setMode('singles')">Singles (1v1)</button>
-        <button class="mode-btn" id="doubles-btn" onclick="setMode('doubles')">Doubles (2v2)</button>
-      </div>
-
-      <div class="setup-row">
-        <div class="rounds-group">
-          <label>Target Games Per Player:</label>
-          <span style="font-weight: bold; color: var(--accent);">4 Games</span>
+        <div id="winnerBanner" class="winner-banner">
+            <h2 id="winnerTitle" style="margin:0; border:none;">We have a Winner!</h2>
+            <img id="winnerImage" src="" alt="Winning Horse">
         </div>
-      </div>
 
-      <div class="input-group">
-        <input type="text" id="player-input" placeholder="Enter player name" onkeydown="if(event.key==='Enter') addPlayer()">
-        <button class="action-btn" style="width: auto;" onclick="addPlayer()">Add</button>
-      </div>
+        <div class="grid-layout">
+            <!-- Left Column: Controls & Setup -->
+            <div class="panel">
+                <h2>Game Setup</h2>
+                
+                <div class="form-group">
+                    <label for="raceLengthSelect">Race Length (Hits to Win)</label>
+                    <select id="raceLengthSelect">
+                        <option value="5">5 Hits (Sprint)</option>
+                        <option value="10" selected>10 Hits (Standard)</option>
+                        <option value="15">15 Hits (Long)</option>
+                        <option value="20">20 Hits (Marathon)</option>
+                    </select>
+                </div>
 
-      <ul id="player-list"></ul>
-      <button class="action-btn" onclick="startEvent()">Start Event</button>
-    </div>
+                <div class="form-group">
+                    <label for="aiModeSelect">AI Players Mode</label>
+                    <select id="aiModeSelect">
+                        <option value="off" selected>No A.I. Players</option>
+                        <option value="on">Add A.I. Players</option>
+                    </select>
+                </div>
 
-    <!-- Active Event Container -->
-    <div class="leaderboard-container" id="leaderboard-section" style="display: none;">
-      <h2>🏆 Leaderboard</h2>
-      <table class="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Games</th>
-            <th>Wins</th>
-            <th>Pts Scored</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboard-body"></tbody>
-      </table>
-    </div>
+                <div class="form-group">
+                    <label for="playerName">Player Name</label>
+                    <input type="text" id="playerName" placeholder="Enter racer name...">
+                </div>
 
-    <div class="matches-container" id="matches-section" style="display: none;">
-      <h2 id="round-header">Round 1 Matchups</h2>
-      <div id="bye-display" class="bye" style="display: none;"></div>
-      <div id="match-list"></div>
-      <button class="action-btn submit-btn" id="next-round-btn" onclick="nextRound()">Next Round</button>
-      <button class="action-btn secondary-btn" onclick="resetEvent()">Reset Tournament</button>
-    </div>
-  </div>
+                <div class="form-group">
+                    <label for="horseSelect">Assign Track / Horse</label>
+                    <select id="horseSelect">
+                        <option value="">Choose track (1-10)...</option>
+                        <option value="1">Lane 1</option>
+                        <option value="2">Lane 2</option>
+                        <option value="3">Lane 3</option>
+                        <option value="4">Lane 4</option>
+                        <option value="5">Lane 5</option>
+                        <option value="6">Lane 6</option>
+                        <option value="7">Lane 7</option>
+                        <option value="8">Lane 8</option>
+                        <option value="9">Lane 9</option>
+                        <option value="10">Lane 10</option>
+                    </select>
+                </div>
 
-  <script>
-    let mode = 'singles';
-    let players = [];
-    let currentRound = 1;
-    let totalRounds = 4;
-    let roundsData = [];
-    let playerStats = {};
+                <button id="addPlayerBtn">Add Player</button>
+                <button id="addAiBtn" class="secondary" style="display: none;">Add AI Racer to Open Lane</button>
+                <button id="randomizeNamesBtn" class="secondary">Randomize Horse Names</button>
+                <button id="clearPlayersBtn" class="danger">Clear Players</button>
 
-    function setMode(selectedMode) {
-      mode = selectedMode;
-      document.getElementById('singles-btn').classList.toggle('active', mode === 'singles');
-      document.getElementById('doubles-btn').classList.toggle('active', mode === 'doubles');
-    }
+                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
 
-    function addPlayer() {
-      const input = document.getElementById('player-input');
-      const name = input.value.trim();
-      if (name && !players.includes(name)) {
-        players.push(name);
-        input.value = '';
-        renderPlayerList();
-      }
-    }
+                <h2>Current Turn</h2>
+                <div id="currentTurnDisplay" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent);">
+                    Loading...
+                </div>
+                <button id="nextTurnBtn" class="secondary">Next Turn &rarr;</button>
 
-    function removePlayer(name) {
-      players = players.filter(p => p !== name);
-      renderPlayerList();
-    }
+                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
 
-    function renderPlayerList() {
-      const list = document.getElementById('player-list');
-      list.innerHTML = players.map(p => `
-        <li>
-          <span>${p}</span>
-          <button class="remove-btn" onclick="removePlayer('${p}')">✕</button>
-        </li>
-      `).join('');
-    }
+                <h2>Controls</h2>
+                <button id="checkWinnerBtn" class="secondary">Check Winner</button>
+                <button id="resetScoresBtn" class="danger">Reset Scores</button>
+                <button id="bullBtn" class="secondary">Bull (+1 All)</button>
+            </div>
 
-    function startEvent() {
-      const minPlayers = mode === 'singles' ? 2 : 4;
-      if (players.length < minPlayers) {
-        alert(`Need at least ${minPlayers} players to start.`);
-        return;
-      }
+            <!-- Right Column: Track Board & Leaderboard -->
+            <div>
+                <div class="panel" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 id="raceTracksTitle" style="margin:0; border:none;">Tracks 1–10</h2>
+                        <span id="activePlayersMeta" style="color: var(--text-muted); font-size: 0.875rem;">0 active horses</span>
+                    </div>
+                    <div id="tracks" class="tracks-container">
+                        <!-- Dynamically rendered track rows -->
+                    </div>
+                </div>
 
-      const matchGroupSize = mode === 'singles' ? 2 : 4;
-      const targetGames = 4;
-      const sitOutCount = players.length % matchGroupSize;
-
-      // Calculate total rounds to ensure 4 games per player
-      if (sitOutCount === 0) {
-        totalRounds = targetGames;
-      } else {
-        const activePerRound = players.length - sitOutCount;
-        totalRounds = Math.round((targetGames * players.length) / activePerRound);
-      }
-
-      playerStats = {};
-      players.forEach(p => {
-        playerStats[p] = { wins: 0, points: 0, gamesPlayed: 0 };
-      });
-
-      currentRound = 1;
-      generateSchedule(matchGroupSize, sitOutCount);
-
-      document.getElementById('setup-section').style.display = 'none';
-      document.getElementById('leaderboard-section').style.display = 'block';
-      document.getElementById('matches-section').style.display = 'block';
-
-      renderLeaderboard();
-      renderCurrentRound();
-    }
-
-    function generateSchedule(groupSize, sitOutCount) {
-      roundsData = [];
-      let byeTracker = {};
-      players.forEach(p => byeTracker[p] = 0);
-
-      for (let r = 1; r <= totalRounds; r++) {
-        let byePlayers = [];
-
-        if (sitOutCount > 0) {
-          // Sort players by who has had the fewest byes to keep sitting out balanced
-          let sortedByByes = [...players].sort((a, b) => byeTracker[a] - byeTracker[b]);
-          
-          // Rotate selection if byes are equal
-          const offset = (r - 1) * sitOutCount % players.length;
-          let pool = [...players.slice(offset), ...players.slice(0, offset)];
-          pool.sort((a, b) => byeTracker[a] - byeTracker[b]);
-
-          byePlayers = pool.slice(0, sitOutCount);
-          byePlayers.forEach(p => byeTracker[p]++);
-        }
-
-        let activePlayers = players.filter(p => !byePlayers.includes(p));
-        activePlayers.sort(() => Math.random() - 0.5);
-
-        let matches = [];
-        if (mode === 'singles') {
-          for (let i = 0; i < activePlayers.length; i += 2) {
-            matches.push({
-              team1: [activePlayers[i]],
-              team2: [activePlayers[i + 1]],
-              score1: null,
-              score2: null,
-              completed: false
-            });
-          }
-        } else {
-          for (let i = 0; i < activePlayers.length; i += 4) {
-            matches.push({
-              team1: [activePlayers[i], activePlayers[i + 1]],
-              team2: [activePlayers[i + 2], activePlayers[i + 3]],
-              score1: null,
-              score2: null,
-              completed: false
-            });
-          }
-        }
-
-        roundsData.push({
-          round: r,
-          byes: byePlayers,
-          matches: matches
-        });
-      }
-    }
-
-    function renderCurrentRound() {
-      const roundInfo = roundsData[currentRound - 1];
-      document.getElementById('round-header').innerText = `Round ${currentRound} of ${totalRounds}`;
-
-      const byeDisplay = document.getElementById('bye-display');
-      if (roundInfo.byes && roundInfo.byes.length > 0) {
-        byeDisplay.style.display = 'block';
-        byeDisplay.innerText = `🛋️ Sitting out this round (Bye): ${roundInfo.byes.join(', ')}`;
-      } else {
-        byeDisplay.style.display = 'none';
-      }
-
-      const matchList = document.getElementById('match-list');
-      matchList.innerHTML = roundInfo.matches.map((m, idx) => `
-        <div class="match-card ${m.completed ? 'completed' : ''}">
-          <div class="team-row">
-            <span>${m.team1.join(' & ')}</span>
-            <input type="number" class="score-input" id="score1-${idx}" value="${m.score1 !== null ? m.score1 : ''}" min="0">
-          </div>
-          <div class="vs">VS</div>
-          <div class="team-row">
-            <span>${m.team2.join(' & ')}</span>
-            <input type="number" class="score-input" id="score2-${idx}" value="${m.score2 !== null ? m.score2 : ''}" min="0">
-          </div>
-          <button class="save-score-btn" onclick="saveScore(${idx})">${m.completed ? 'Update Score' : 'Save Score'}</button>
+                <div class="panel">
+                    <h2>Leaderboard</h2>
+                    <ul id="leaderboardList" class="leaderboard-list">
+                        <!-- Dynamically rendered leaderboard -->
+                    </ul>
+                </div>
+            </div>
         </div>
-      `).join('');
+    </div>
 
-      const nextBtn = document.getElementById('next-round-btn');
-      if (currentRound === totalRounds) {
-        nextBtn.innerText = 'Complete Tournament';
-      } else {
-        nextBtn.innerText = 'Next Round';
-      }
-    }
+    <script>
+        let FINISH_HITS = 10;
+        let numbersRevealed = false;
+        let aiMode = false;
 
-    function saveScore(matchIdx) {
-      const score1 = parseInt(document.getElementById(`score1-${matchIdx}`).value);
-      const score2 = parseInt(document.getElementById(`score2-${matchIdx}`).value);
+        const trackColors = {
+            1: '#ef4444', 2: '#f97316', 3: '#f59e0b', 4: '#84cc16', 5: '#10b981',
+            6: '#06b6d4', 7: '#3b82f6', 8: '#6366f1', 9: '#a855f7', 10: '#ec4899'
+        };
 
-      if (isNaN(score1) || isNaN(score2)) {
-        alert('Please enter valid scores for both teams.');
-        return;
-      }
+        const horseNamePool = [
+            "Hellfire Blitz", "Dart Vadar", "Hi Bob", "The Queen's Getaway", "Papal Sidekick",
+            "The Alter Boy", "Castle Roller", "Bulls Eye", "Lord of the Reins", "Royal Badass",
+            "Thunder Hooves", "Long Live the Bitch", "Thats my Quad", "Hell to the Neigh",
+            "Storm Chaser", "Hoof & Order", "Diplomatic Immunity", "Knights' Redlar",
+            "That's My Quad", "King's Errand", "Harlett of Hellcastle"
+        ];
 
-      const match = roundsData[currentRound - 1].matches[matchIdx];
-      
-      match.score1 = score1;
-      match.score2 = score2;
-      match.completed = true;
+        const aiNamesPool = [
+            "Bot Runner", "Cyber Stallion", "Robo-Nag", "AI Lightning", "Silicon Turf",
+            "Byte Sized", "Algorithm Ace", "Processor Pony", "Glitch Galloper", "Circuit Steed"
+        ];
 
-      recalculateAllStats();
-      renderLeaderboard();
-      renderCurrentRound();
-    }
+        const horseImagePool = [
+            "hellcastle_horse_appaloosa.png", "hellcastle_horse_bay.png", "hellcastle_horse_blue_roan.png",
+            "hellcastle_horse_buckskin.png", "hellcastle_horse_chestnut.png", "hellcastle_horse_cremello.png",
+            "hellcastle_horse_dun.png", "hellcastle_horse_gray.png", "hellcastle_horse_leopard.png",
+            "hellcastle_horse_paint.png", "hellcastle_horse_palomino.png", "hellcastle_horse_roan.png",
+            "hellcastle_horse_skewbald.png", "hellcastle_horse_smoky_black.png", "hellcastle_horse_white.png", "Horsey1.png"
+        ];
 
-    function recalculateAllStats() {
-      players.forEach(p => {
-        playerStats[p] = { wins: 0, points: 0, gamesPlayed: 0 };
-      });
+        let state = {
+            players: [],
+            scores: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 },
+            assignedNumbers: {},
+            turnIndex: 0,
+            winner: null
+        };
 
-      roundsData.forEach(r => {
-        r.matches.forEach(m => {
-          if (m.completed) {
-            const team1Win = m.score1 > m.score2;
-            const team2Win = m.score2 > m.score1;
-
-            m.team1.forEach(p => {
-              playerStats[p].points += m.score1;
-              playerStats[p].gamesPlayed += 1;
-              if (team1Win) playerStats[p].wins += 1;
-            });
-
-            m.team2.forEach(p => {
-              playerStats[p].points += m.score2;
-              playerStats[p].gamesPlayed += 1;
-              if (team2Win) playerStats[p].wins += 1;
-            });
-          }
-        });
-      });
-    }
-
-    function renderLeaderboard() {
-      const sorted = [...players].sort((a, b) => {
-        if (playerStats[b].wins !== playerStats[a].wins) {
-          return playerStats[b].wins - playerStats[a].wins;
+        function assignRandomNumbers() {
+            const numbers = Array.from({ length: 20 }, (_, i) => i + 1);
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+            state.assignedNumbers = {};
+            for (let i = 1; i <= 10; i++) {
+                state.assignedNumbers[i] = [numbers[(i - 1) * 2], numbers[(i - 1) * 2 + 1]];
+            }
         }
-        return playerStats[b].points - playerStats[a].points;
-      });
 
-      const body = document.getElementById('leaderboard-body');
-      body.innerHTML = sorted.map((p, idx) => `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${p}</td>
-          <td>${playerStats[p].gamesPlayed} / 4</td>
-          <td>${playerStats[p].wins}</td>
-          <td>${playerStats[p].points}</td>
-        </tr>
-      `).join('');
-    }
+        function assignRandomHorseNames() {
+            numbersRevealed = true;
+            let shuffledNames = [...horseNamePool];
+            const existingNames = new Set(state.players.map(p => p.name));
+            shuffledNames = shuffledNames.filter(name => !existingNames.has(name));
+            
+            for (let i = shuffledNames.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
+            }
 
-    function nextRound() {
-      const currentMatches = roundsData[currentRound - 1].matches;
-      const allCompleted = currentMatches.every(m => m.completed);
+            let nameIndex = 0;
+            for (let i = 1; i <= 10; i++) {
+                const hasPlayer = state.players.some(p => p.horse === i);
+                if (!hasPlayer && nameIndex < shuffledNames.length) {
+                    state.players.push({ name: shuffledNames[nameIndex], horse: i, isAI: false });
+                    nameIndex++;
+                }
+            }
+            state.winner = null;
+            renderTracks();
+        }
 
-      if (!allCompleted) {
-        alert('Please save scores for all matches in this round before continuing.');
-        return;
-      }
+        function declareWinner(trackNum, reasonText = "wins the race!") {
+            if (state.winner) return;
+            state.winner = trackNum;
+            const player = state.players.find(p => p.horse === trackNum);
+            const winnerName = player ? `Track ${trackNum} (${player.name})` : `Track ${trackNum}`;
+            document.getElementById('winnerTitle').innerText = `${winnerName} ${reasonText}`;
+            const randomImg = horseImagePool[Math.floor(Math.random() * horseImagePool.length)];
+            document.getElementById('winnerImage').src = randomImg;
+            document.getElementById('winnerBanner').style.display = 'block';
+        }
 
-      if (currentRound < totalRounds) {
-        currentRound++;
-        renderCurrentRound();
-      } else {
-        alert('🎉 Tournament Complete!');
-      }
-    }
+        function renderTracks() {
+            const container = document.getElementById('tracks');
+            container.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const player = state.players.find(p => p.horse === i);
+                const ownerName = player ? `${player.name} ${player.isAI ? '🤖' : ''}` : 'Open Lane';
+                const score = state.scores[i];
+                const progressPercent = Math.min(100, (score / FINISH_HITS) * 100);
+                const numsText = numbersRevealed && state.assignedNumbers[i] ? state.assignedNumbers[i].join(', ') : 'Hidden';
 
-    function resetEvent() {
-      if (confirm('Are you sure you want to reset the tournament?')) {
-        document.getElementById('setup-section').style.display = 'block';
-        document.getElementById('leaderboard-section').style.display = 'none';
-        document.getElementById('matches-section').style.display = 'none';
-      }
-    }
-  </script>
+                const row = document.createElement('div');
+                row.className = 'track-row';
+                row.innerHTML = `
+                    <div class="track-number" style="color: ${trackColors[i]}">${i}</div>
+                    <div class="track-info">
+                        <div class="track-owner">${ownerName}</div>
+                        <div class="assigned-nums">Nums: [${numsText}]</div>
+                    </div>
+                    <div class="track-lane">
+                        <div class="horse-icon" style="left: ${progressPercent}%; background: ${trackColors[i]}"></div>
+                    </div>
+                    <div class="track-score">${score}</div>
+                    <div class="track-actions">
+                        <button class="action-btn" onclick="adjustScore(${i}, 1)">Hit +1</button>
+                        <button class="action-btn secondary" onclick="adjustScore(${i}, -1)">Undo</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+            document.getElementById('activePlayersMeta').innerText = `${state.players.length} active horses`;
+            document.getElementById('raceTracksTitle').innerText = `Tracks 1–10 (${FINISH_HITS} Lengths)`;
+            renderLeaderboard();
+            renderTurn();
+        }
+
+        function adjustScore(track, delta) {
+            if (state.winner) return;
+            state.scores[track] = Math.max(0, Math.min(FINISH_HITS, state.scores[track] + delta));
+            if (state.scores[track] >= FINISH_HITS && !state.winner) {
+                declareWinner(track);
+            }
+            renderTracks();
+        }
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            if (state.players.length === 0) {
+                list.innerHTML = '<li style="color: var(--text-muted); justify-content: center;">No active players</li>';
+                return;
+            }
+            const sorted = [...state.players].sort((a, b) => state.scores[b.horse] - state.scores[a.horse]);
+            sorted.forEach(p => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>#${p.horse} ${p.name} ${p.isAI ? '🤖' : ''}</span> <strong>${state.scores[p.horse]} pts</strong>`;
+                list.appendChild(li);
+            });
+        }
+
+        function renderTurn() {
+            const display = document.getElementById('currentTurnDisplay');
+            if (state.players.length === 0) {
+                display.innerText = "No players added / Open Lanes.";
+                return;
+            }
+            const currentPlayer = state.players[state.turnIndex % state.players.length];
+            const numsText = numbersRevealed && state.assignedNumbers[currentPlayer.horse] ? state.assignedNumbers[currentPlayer.horse].join(', ') : 'Hidden';
+            display.innerHTML = `${currentPlayer.name} ${currentPlayer.isAI ? '🤖 (AI)' : ''}<br><span style="font-size:0.85rem; color:var(--text-muted);">Riding Track #${currentPlayer.horse} (Numbers: ${numsText})</span>`;
+
+            // Trigger AI Turn automatically if applicable
+            if (currentPlayer.isAI && !state.winner) {
+                setTimeout(handleAITurn, 1000);
+            }
+        }
+
+        function handleAITurn() {
+            if (state.winner) return;
+            const currentPlayer = state.players[state.turnIndex % state.players.length];
+            if (!currentPlayer || !currentPlayer.isAI) return;
+
+            // Simulate 3 darts for the AI with a 40% chance per dart to score a hit
+            let hitsScored = 0;
+            for (let dart = 0; dart < 3; dart++) {
+                if (Math.random() < 0.40) {
+                    hitsScored++;
+                }
+            }
+
+            if (hitsScored > 0) {
+                adjustScore(currentPlayer.horse, hitsScored);
+            }
+
+            // Auto advance turn after a short pause
+            setTimeout(() => {
+                if (!state.winner) {
+                    state.turnIndex++;
+                    renderTurn();
+                }
+            }, 1200);
+        }
+
+        function handleBullHit() {
+            if (state.winner) return;
+            for (let i = 1; i <= 10; i++) {
+                state.scores[i] = Math.min(FINISH_HITS, state.scores[i] + 1);
+                if (state.scores[i] >= FINISH_HITS && !state.winner) {
+                    declareWinner(i);
+                }
+            }
+            renderTracks();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('raceLengthSelect').addEventListener('change', (e) => {
+                FINISH_HITS = parseInt(e.target.value);
+                renderTracks();
+            });
+
+            document.getElementById('aiModeSelect').addEventListener('change', (e) => {
+                aiMode = e.target.value === 'on';
+                const addAiBtn = document.getElementById('addAiBtn');
+                const playerNameInput = document.getElementById('playerName');
+                
+                if (aiMode) {
+                    addAiBtn.style.display = 'block';
+                    playerNameInput.placeholder = "Enter human racer name...";
+                } else {
+                    addAiBtn.style.display = 'none';
+                    playerNameInput.placeholder = "Enter racer name...";
+                }
+            });
+
+            document.getElementById('addPlayerBtn').addEventListener('click', () => {
+                const nameInput = document.getElementById('playerName');
+                const horseSelect = document.getElementById('horseSelect');
+                const name = nameInput.value.trim();
+                const horse = parseInt(horseSelect.value);
+
+                if (!name || isNaN(horse)) {
+                    alert('Please enter a player name and select a valid track (1-10).');
+                    return;
+                }
+                if (state.players.some(p => p.horse === horse)) {
+                    alert('This track is already taken by another player.');
+                    return;
+                }
+
+                state.players.push({ name, horse, isAI: false });
+                nameInput.value = '';
+                horseSelect.value = '';
+                renderTracks();
+            });
+
+            document.getElementById('addAiBtn').addEventListener('click', () => {
+                let availableTrack = null;
+                for (let i = 1; i <= 10; i++) {
+                    if (!state.players.some(p => p.horse === i)) {
+                        availableTrack = i;
+                        break;
+                    }
+                }
+
+                if (!availableTrack) {
+                    alert('All 10 tracks are currently taken!');
+                    return;
+                }
+
+                const existingNames = new Set(state.players.map(p => p.name));
+                const availableAiNames = aiNamesPool.filter(n => !existingNames.has(n));
+                const aiName = availableAiNames.length > 0 ? availableAiNames[Math.floor(Math.random() * availableAiNames.length)] : `AI Racer #${availableTrack}`;
+
+                state.players.push({
+                    name: aiName,
+                    horse: availableTrack,
+                    isAI: true
+                });
+
+                renderTracks();
+            });
+
+            document.getElementById('randomizeNamesBtn').addEventListener('click', assignRandomHorseNames);
+
+            document.getElementById('clearPlayersBtn').addEventListener('click', () => {
+                if (confirm('Clear all players and reset scores?')) {
+                    state.players = [];
+                    state.winner = null;
+                    state.turnIndex = 0;
+                    numbersRevealed = false;
+                    Object.keys(state.scores).forEach(k => state.scores[k] = 0);
+                    document.getElementById('winnerBanner').style.display = 'none';
+                    assignRandomNumbers();
+                    renderTracks();
+                }
+            });
+
+            document.getElementById('nextTurnBtn').addEventListener('click', () => {
+                if (state.players.length > 0) {
+                    state.turnIndex++;
+                    renderTurn();
+                }
+            });
+
+            document.getElementById('checkWinnerBtn').addEventListener('click', () => {
+                let maxScore = -1;
+                let leader = null;
+                for (let i = 1; i <= 10; i++) {
+                    if (state.scores[i] > maxScore) {
+                        maxScore = state.scores[i];
+                        leader = i;
+                    }
+                }
+                alert(`Current leader is Track #${leader} with ${maxScore} hits!`);
+            });
+
+            document.getElementById('resetScoresBtn').addEventListener('click', () => {
+                if (confirm('Reset all scores, re-assign random numbers, and hide target numbers?')) {
+                    Object.keys(state.scores).forEach(k => state.scores[k] = 0);
+                    state.winner = null;
+                    numbersRevealed = false;
+                    document.getElementById('winnerBanner').style.display = 'none';
+                    assignRandomNumbers();
+                    renderTracks();
+                }
+            });
+
+            document.getElementById('bullBtn').addEventListener('click', handleBullHit);
+        }
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            assignRandomNumbers();
+            renderTracks();
+            setupEventListeners();
+        });
+    </script>
 </body>
 </html>
